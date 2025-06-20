@@ -3,5 +3,4 @@ uvicorn
 sqlalchemy
 psycopg2-binary
 python-dotenv
-scikit-learn
-numpy
+sentence-transformers
