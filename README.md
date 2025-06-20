@@ -6,7 +6,7 @@
 
 DevSnippets Backend is a FastAPI-powered REST API that enables intelligent code search using AI-powered semantic similarity. Users can upload code snippets and search through them using natural language queries like "how to sort an array" to find relevant code regardless of exact keyword matches.
 
-For the front-end portion, [devSnippets - FrontEnd](https://github.com/WesloTheWeb/devSnippets)
+For the front-end portion, [devSnippets - FrontEnd](https://github.com/WesloTheWeb/devSnippets-frontend)
 
 ## 🚀 Tech Stack
 
@@ -24,7 +24,7 @@ For the front-end portion, [devSnippets - FrontEnd](https://github.com/WesloTheW
 - **GraphQL** - Alternative query interface (currently REST only)
 
 ### **Frontend** *(Separate Repository)*
-[devSnippets - FrontEnd](https://github.com/WesloTheWeb/devSnippets)
+[devSnippets - FrontEnd](https://github.com/WesloTheWeb/devSnippets-frontend)
 - **Angular 18** - Modern TypeScript frontend framework
 - **RxJS** - Reactive programming for HTTP operations
 
