@@ -135,21 +135,28 @@ async def search_snippets(search_request: SearchRequest, db: Session = Depends(g
     ]
     
     # Perform semantic search with a reasonable threshold
-    # 0.5 = 50% similarity required (adjust as needed)
+    # 0.35 = 35% similarity for code search (lower than text search)
     search_results = search_service.search_snippets(
         query=search_request.query,
         snippets_with_embeddings=snippets_with_embeddings,
         limit=search_request.limit,
-        threshold=0.5  # Only show results with 50%+ similarity
+        threshold=0.30  # Lowered from 0.35 to catch more relevant results
     )
     
-    # If no results found with high threshold, try a lower one
+    # Debug: Print similarity scores
+    print(f"\n🔍 Search query: '{search_request.query}'")
+    print(f"📊 Results found: {len(search_results)}")
+    for snippet, score in search_results[:3]:  # Show top 3
+        print(f"  - {snippet.title}: {score:.2%} similarity")
+    
+    # If no results found with standard threshold, try a lower one
     if not search_results and len(snippets_with_embeddings) > 0:
+        print("📉 No results with 35% threshold, trying 25%...")
         search_results = search_service.search_snippets(
             query=search_request.query,
             snippets_with_embeddings=snippets_with_embeddings,
             limit=search_request.limit,
-            threshold=0.3  # Fallback to 30% for some results
+            threshold=0.20  # Fallback to 20% for at least some results
         )
     
     # Convert to response format
@@ -163,7 +170,7 @@ async def search_snippets(search_request: SearchRequest, db: Session = Depends(g
         total_count=len(result_snippets),
         query=search_request.query
     )
-  
+
 @router.get("/languages", response_model=List[str])
 async def get_available_languages(db: Session = Depends(get_db)):
     """Get list of available programming languages"""
