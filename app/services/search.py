@@ -32,7 +32,7 @@ class SemanticSearchService:
         similarity = 1 - cosine(query_vec, snippet_vec)
         return float(similarity)
     
-    def search_snippets(self, query: str, snippets_with_embeddings: List[Tuple], limit: int = 10) -> List[Tuple]:
+    def search_snippets(self, query: str, snippets_with_embeddings: List[Tuple], limit: int = 10, threshold: float = 0.3) -> List[Tuple]:
         """
         Search snippets using semantic similarity
         
@@ -40,6 +40,7 @@ class SemanticSearchService:
             query: Search query
             snippets_with_embeddings: List of (snippet, embedding) tuples
             limit: Maximum number of results
+            threshold: Minimum similarity score (0-1) to include in results
             
         Returns:
             List of (snippet, similarity_score) tuples sorted by similarity
@@ -55,7 +56,10 @@ class SemanticSearchService:
         for snippet, embedding in snippets_with_embeddings:
             if embedding:  # Make sure embedding exists
                 similarity = self.calculate_similarity(query_embedding, embedding)
-                results.append((snippet, similarity))
+                
+                # Only include results above the threshold
+                if similarity >= threshold:
+                    results.append((snippet, similarity))
         
         # Sort by similarity (highest first) and limit results
         results.sort(key=lambda x: x[1], reverse=True)

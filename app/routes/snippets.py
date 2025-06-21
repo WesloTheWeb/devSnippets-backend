@@ -105,11 +105,27 @@ async def delete_snippet(snippet_id: int, db: Session = Depends(get_db)):
 async def search_snippets(search_request: SearchRequest, db: Session = Depends(get_db)):
     """Search code snippets using semantic similarity"""
     
-    # Get all snippets with embeddings
+    # Get all snippets
     all_snippets = db.query(SnippetDB).all()
     
     if not all_snippets:
         return SearchResponse(snippets=[], total_count=0, query=search_request.query)
+    
+    # Generate embeddings for snippets that don't have them
+    for snippet in all_snippets:
+        if snippet.embedding is None:
+            print(f"Generating embedding for: {snippet.title}")
+            embedding = search_service.create_snippet_embedding(
+                title=snippet.title,
+                description=snippet.description or "",
+                code=snippet.code,
+                language=snippet.language
+            )
+            snippet.embedding = embedding
+            db.add(snippet)
+    
+    # Commit any embedding updates
+    db.commit()
     
     # Prepare snippets with embeddings for search
     snippets_with_embeddings = [
@@ -118,12 +134,23 @@ async def search_snippets(search_request: SearchRequest, db: Session = Depends(g
         if snippet.embedding  # Only include snippets with embeddings
     ]
     
-    # Perform semantic search
+    # Perform semantic search with a reasonable threshold
+    # 0.5 = 50% similarity required (adjust as needed)
     search_results = search_service.search_snippets(
         query=search_request.query,
         snippets_with_embeddings=snippets_with_embeddings,
-        limit=search_request.limit
+        limit=search_request.limit,
+        threshold=0.5  # Only show results with 50%+ similarity
     )
+    
+    # If no results found with high threshold, try a lower one
+    if not search_results and len(snippets_with_embeddings) > 0:
+        search_results = search_service.search_snippets(
+            query=search_request.query,
+            snippets_with_embeddings=snippets_with_embeddings,
+            limit=search_request.limit,
+            threshold=0.3  # Fallback to 30% for some results
+        )
     
     # Convert to response format
     result_snippets = [
@@ -136,7 +163,7 @@ async def search_snippets(search_request: SearchRequest, db: Session = Depends(g
         total_count=len(result_snippets),
         query=search_request.query
     )
-
+  
 @router.get("/languages", response_model=List[str])
 async def get_available_languages(db: Session = Depends(get_db)):
     """Get list of available programming languages"""
