@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, JSON
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, JSON, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime
@@ -30,11 +30,46 @@ class SnippetDB(Base):
     tags = Column(JSON)  # PostgreSQL has native JSON support
     created_at = Column(DateTime, default=datetime.utcnow)
     embedding = Column(JSON)  # Store embeddings as JSON array
+    
+def run_performance_migrations():
+    """
+    Run database performance optimizations.
+    This is a simple migration system - tracks what we've applied.
+    """
+    migrations = [
+        {
+            "id": "001_add_language_index",
+            "sql": "CREATE INDEX IF NOT EXISTS idx_snippets_language ON snippets(language);"
+        },
+        {
+            "id": "002_add_date_index", 
+            "sql": "CREATE INDEX IF NOT EXISTS idx_snippets_created_at ON snippets(created_at DESC);"
+        },
+        {
+            "id": "003_add_search_index",
+            "sql": "CREATE INDEX IF NOT EXISTS idx_snippets_search ON snippets USING gin(to_tsvector('english', title || ' ' || description));"
+        },
+        {
+            "id": "004_add_composite_index",
+            "sql": "CREATE INDEX IF NOT EXISTS idx_snippets_lang_date ON snippets(language, created_at DESC);"
+        }
+    ]
+    
+    with engine.connect() as conn:
+        for migration in migrations:
+            try:
+                print(f"Running migration: {migration['id']}")
+                conn.execute(text(migration['sql']))
+                conn.commit()
+                print(f"✅ Migration {migration['id']} completed")
+            except Exception as e:
+                print(f"❌ Migration {migration['id']} failed: {e}")
 
 def create_tables():
     """Create database tables"""
     Base.metadata.create_all(bind=engine)
-
+    run_performance_migrations()
+ 
 def get_db() -> Session:
     """Get database session"""
     db = SessionLocal()
