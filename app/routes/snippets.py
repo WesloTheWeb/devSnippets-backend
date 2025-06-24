@@ -6,6 +6,7 @@ import json
 from app.services.database import get_db, SnippetDB
 from app.schemas.snippet import Snippet, SnippetCreate, SnippetUpdate, SearchRequest, SearchResponse
 from app.services.search import search_service
+from app.services.weaviate_service import weaviate_service
 
 router = APIRouter()
 
@@ -164,6 +165,45 @@ async def search_snippets(search_request: SearchRequest, db: Session = Depends(g
         db_to_pydantic(snippet, similarity=similarity)
         for snippet, similarity in search_results
     ]
+    
+    return SearchResponse(
+        snippets=result_snippets,
+        total_count=len(result_snippets),
+        query=search_request.query
+    )
+
+@router.post("/search/vector", response_model=SearchResponse)
+async def search_snippets_with_weaviate(search_request: SearchRequest, db: Session = Depends(get_db)):
+    """Search code snippets using Weaviate vector database (FAST!)"""
+    
+    # Step 1: Convert search query to vector (same as before)
+    query_embedding = search_service.create_embedding(search_request.query)
+    
+    # Step 2: Search Weaviate for similar vectors (NEW - this is the fast part)
+    weaviate_results = weaviate_service.search_similar_snippets(
+        query_vector=query_embedding,
+        limit=search_request.limit
+    )
+    
+    if not weaviate_results:
+        return SearchResponse(snippets=[], total_count=0, query=search_request.query)
+    
+    # Step 3: Get full snippet data from PostgreSQL using the IDs
+    snippet_ids = [int(result["snippet_id"]) for result in weaviate_results]
+    snippets = db.query(SnippetDB).filter(SnippetDB.id.in_(snippet_ids)).all()
+    
+    # Step 4: Match up the similarity scores from Weaviate
+    id_to_similarity = {int(result["snippet_id"]): result["similarity"] for result in weaviate_results}
+    
+    # Step 5: Convert to response format with similarity scores
+    result_snippets = []
+    for snippet in snippets:
+        similarity = id_to_similarity.get(snippet.id, 0.0)
+        pydantic_snippet = db_to_pydantic(snippet, similarity=similarity)
+        result_snippets.append(pydantic_snippet)
+    
+    # Sort by similarity (highest first)
+    result_snippets.sort(key=lambda x: x.similarity or 0, reverse=True)
     
     return SearchResponse(
         snippets=result_snippets,
