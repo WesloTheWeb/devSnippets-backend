@@ -4,7 +4,7 @@
 
 ## 🎯 Project Overview
 
-DevSnippets Backend is a FastAPI-powered REST API that enables intelligent code search using AI-powered semantic similarity. Users can upload code snippets and search through them using natural language queries like "how to sort an array" to find relevant code regardless of exact keyword matches.
+DevSnippets Backend is a FastAPI-powered REST API that enables intelligent code search using AI-powered semantic similarity. Users can upload code snippets and search through them using natural language queries like "arrange numbers" to find relevant code regardless of exact keyword matches.
 
 For the front-end portion, [devSnippets - FrontEnd](https://github.com/WesloTheWeb/devSnippets-frontend)
 
@@ -15,8 +15,7 @@ For the front-end portion, [devSnippets - FrontEnd](https://github.com/WesloTheW
 - **PostgreSQL** - Production-ready relational database (via Supabase)
 - **SQLAlchemy** - Python SQL toolkit and ORM
 - **Sentence Transformers** - AI model for semantic text embeddings
-- **Pydantic** - Data validation using Python type annotations
-- **Uvicorn** - Lightning-fast ASGI server
+- **Uvicorn** - Lightning-fast ASGI (Asynchronous Server Gateway Interface) server
 
 ### **Planned Implementation** 
 - **Vector Database** (Weaviate/Pinecone) - Dedicated vector storage for improved semantic search
@@ -28,29 +27,7 @@ For the front-end portion, [devSnippets - FrontEnd](https://github.com/WesloTheW
 - **Angular 18** - Modern TypeScript frontend framework
 - **RxJS** - Reactive programming for HTTP operations
 
-## 🛣️ Roadmap
-
-### Phase 1 ✅ (Current)
-- [x] FastAPI backend with PostgreSQL
-- [x] Basic CRUD operations for snippets
-- [x] AI-powered semantic search
-- [x] RESTful API design
-- [x] Auto-generated API documentation
-
-### Phase 2 🔄 (In Progress)
-- [ ] Angular frontend integration
-- [ ] Advanced search filters
-- [ ] User authentication
-- [ ] Rate limiting
-
-### Phase 3 📋 (Planned)
-- [ ] Dedicated vector database (Weaviate/Pinecone)
-- [ ] Docker containerization
-- [ ] GraphQL API
-- [ ] Advanced analytics
-
 ## ⚡ Quick Start
-
 ### Prerequisites
 - Python 3.9+
 - PostgreSQL database (or Supabase account)
@@ -104,6 +81,7 @@ The API will be available at:
 | `PUT` | `/api/snippets/{id}` | Update an existing snippet |
 | `DELETE` | `/api/snippets/{id}` | Delete a snippet |
 | `POST` | `/api/search` | Semantic search through snippets |
+| `POST` | `/api/search/vector` | Semantic search through snippets through weaviat (faster) |
 | `GET` | `/api/languages` | Get list of available programming languages |
 
 ## 🔍 Usage Examples
